@@ -1,0 +1,122 @@
+- hosts: web
+  become: yes
+  vars_files:
+    - vars/env.yml
+  tasks:
+    - name: Instalar o repositório epel-release
+      yum:
+        name: epel-release
+        state: present  
+
+    - name: Instalar o repositório Remi
+      command: dnf -y install https://rpms.remirepo.net/enterprise/remi-release-9.rpm 
+
+    - name: Instalar repositório Percona
+      command: dnf -y install https://repo.percona.com/yum/percona-release-latest.noarch.rpm 
+
+    - name: Ativar repositório (percona setup)
+      command: percona-release setup ps80 -y
+
+    - name: Resetar o módulo do PHP
+      command: dnf -y module reset php 
+
+    - name: Ativar o módulo php 8.2
+      command: dnf -y module install php:remi-8.2
+
+    - name: Atualizar o cache do gerenciador de pacotes
+      dnf:
+        name: ''
+        update_cache: yes
+
+    - name: Instalar as dependências
+      package:
+        name: 
+          - httpd
+          - dnf
+          - net-tools 
+          - wget
+          - bzip2
+          - unzip
+          - telnet
+          - vim
+          - policycoreutils-python-utils
+          - percona-server-server
+          - python
+          - python-cryptography
+          - yum-utils
+          - tar
+          - certbot
+          - python-certbot-apache
+          - pip
+        state: latest    
+
+
+    - name: Instalar o módulo PyMySQL
+      pip:
+        name: PyMySQL
+        state: present
+
+    - name: Instalar PHP 8.2
+      yum:
+        name:
+          - php
+          - php-common
+          - php-cli
+          - php-gd
+          - php-curl 
+          - php-mysqlnd
+          - php-fpm
+          - php-mysqli
+          - php-pecl-apcu
+          - php-pecl-zendopcache
+          - php-opcache
+          - php-soap
+          - php-xmlrpc
+          - php-snmp
+          - php-ldap
+          - composer
+        state: latest
+    
+    - name: Configurações de banco de dados
+      block:
+      - name: "Percona >= 8.0 new install measures (Red Hat)"
+        block:
+          - name: Iniciar mysqld
+            systemd:
+              name: mysqld
+              enabled: yes
+              state: started  
+
+          - name: "Obter a senha temporária do log do MySQL"
+            shell: "cat /var/log/mysqld.log | sed -n 's/.*temporary password is generated for root@localhost: //p' | tail -n1"
+            register: temppass
+
+          - name: "Alterar a senha do usuário root no MySQL"
+            shell: "mysqladmin -u root -p'{{ temppass.stdout }}' password '{{MYSQL_ROOT_PASSWORD}}'"
+    
+         
+    - name: Desativar o SELinux
+      selinux:
+        state: disabled
+  
+    - name: Ajustar as configurações do PHP
+      ini_file:
+        path: /etc/php.ini
+        section: "{{item.section}}"
+        option: "{{ item.option }}"
+        value: "{{ item.value }}"
+      loop:
+        - { section: 'PHP', option: 'memory_limit', value: '1024M' }
+        - { section: 'PHP', option: 'max_execution_time', value: '600' }
+        - { section: 'PHP', option: 'post_max_size', value: '20M' }
+        - { section: 'PHP', option: 'max_file_uploads', value: '50' }
+        - { section: 'Date', option: 'date.timezone', value: 'America/Sao_Paulo' }
+        - { section: 'Session', option: 'session.cookie_httponly', value: 'on' }
+    
+    - name: Iniciando os serviços
+      block:
+      - name: Iniciar o serviço HTTPD
+        systemd:
+          name: httpd
+          enabled: true
+          state: started
