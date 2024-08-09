@@ -1,4 +1,6 @@
-Aqui está um README simplificado para o seu playbook:
+![Ansible](https://img.shields.io/badge/ansible-%231A1918.svg?style=for-the-badge&logo=ansible&logoColor=white)
+![ChatGPT](https://img.shields.io/badge/chatGPT-74aa9c?style=for-the-badge&logo=openai&logoColor=white)
+[![Linkedin](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/fernando-dias-da-silva/)
 
 ---
 
@@ -43,4 +45,4 @@ Certifique-se de que as variáveis de ambiente estejam corretamente definidas no
 
 ---
 
-Esse README fornece as informações essenciais para entender e usar o playbook.
+Esse README foi criado com a ajuda de Inteligencia Artificial
